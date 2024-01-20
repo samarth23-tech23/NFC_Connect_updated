@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "898003188030",
+    "firebase_url": "https://nfc-connect-default-rtdb.firebaseio.com",
+    "project_id": "nfc-connect",
+    "storage_bucket": "nfc-connect.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:898003188030:android:75a2a7fd3e462cf69bd46f",
+        "android_client_info": {
+          "package_name": "com.example.nfcconnect"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "898003188030-krh03gollkfnvk8fm3pouecve78lcb57.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.nfcconnect",
+            "certificate_hash": "985ec46e00651d77f29cafbcb357398d29320cc3"
+          }
+        },
+        {
+          "client_id": "898003188030-9prrglc5l2h174u3quvcr1ru171dqij4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAlZXNRKVxeIaYOjrycyazTfMmy985Q5vc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "898003188030-9prrglc5l2h174u3quvcr1ru171dqij4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
