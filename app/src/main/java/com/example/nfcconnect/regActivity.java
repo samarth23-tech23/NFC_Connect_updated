@@ -2,6 +2,7 @@ package com.example.nfcconnect;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.ClipData;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
@@ -9,25 +10,23 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.Toast;
+import android.app.AlertDialog;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.content.DialogInterface;
+
+
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import java.io.IOException;
 import java.util.Base64; // Import Base64
 import java.util.HashMap;
 import java.util.Map;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.FormBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
+import java.util.Random;
 
 public class regActivity extends AppCompatActivity implements TextWatcher {
 
@@ -37,8 +36,6 @@ public class regActivity extends AppCompatActivity implements TextWatcher {
     DatabaseReference reference;
     String encPassword, encNFCpass, name, emailId, aesKeyString; // Store the AES key as a string
     SecretKey aesKey;
-    ProgressBar progressBar;
-    OkHttpClient okHttpClient = new OkHttpClient();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,9 +47,6 @@ public class regActivity extends AppCompatActivity implements TextWatcher {
         rButton = findViewById(R.id.regbtn2);
         regPass = findViewById(R.id.pId);
         regnPass = findViewById(R.id.npId);
-        progressBar = findViewById(R.id.progressBar3);
-
-        progressBar.setVisibility(View.GONE);
 
         // Generate the AES key once in the onCreate method
         try {
@@ -77,10 +71,10 @@ public class regActivity extends AppCompatActivity implements TextWatcher {
                         encNFCpass = encryptAES(NFC_Password, aesKey);
 
                         rootNode = FirebaseDatabase.getInstance();
-                        reference = rootNode.getReference("app");
+                        reference = rootNode.getReference("lockSystems"); // Root node for lock systems
 
-                        // Convert AES key to a Base64-encoded string
-                        aesKeyString = encodeAESKeyToString(aesKey);
+                        // Create a unique identifier for each lock system
+                        String lockSystemId = generateLockSystemId(name);
 
                         // Create a map to store the user data
                         Map<String, Object> userData = new HashMap<>();
@@ -88,9 +82,12 @@ public class regActivity extends AppCompatActivity implements TextWatcher {
                         userData.put("emailId", emailId);
                         userData.put("encPassword", encPassword);
                         userData.put("encNFCpass", encNFCpass);
-                        userData.put("aesKey", aesKeyString); // Store the AES key as a Base64 string
+                        userData.put("aesKey", encodeAESKeyToString(aesKey)); // Store the AES key as a Base64 string
 
-                        reference.child(name).setValue(userData);
+                        // Add user data under the lock system node
+                        reference.child(lockSystemId).child("users").child(name).setValue(userData);
+
+                        showLockSystemIdDialog(lockSystemId);
 
                         Toast.makeText(regActivity.this, "Successfully Registered with Name " + name, Toast.LENGTH_SHORT).show();
                     } catch (Exception e) {
@@ -101,59 +98,32 @@ public class regActivity extends AppCompatActivity implements TextWatcher {
                     Toast.makeText(regActivity.this, "Fill all the required fields", Toast.LENGTH_SHORT).show();
                 }
 
-                String combinedUP = name + ":" + encNFCpass;
-                //sending to raspberry pi
-                // For resetting, send combinedUP to the server (e.g., via HTTP request)
-                RequestBody formbody4 = new FormBody.Builder()
-                        .add("password", combinedUP)
-                        .add("activity", "register")
-                        .build();
+                // ...
 
-                Request request3 = new Request.Builder()
-                        .url("https://raspi-nfcapi23.socketxp.com/register")
-                        .post(formbody4)
-                        .build();
-
-                Toast.makeText(regActivity.this, "Sending to Raspberry PI", Toast.LENGTH_SHORT).show();
-
-                okHttpClient.newCall(request3).enqueue(new Callback() {
-                    @Override
-                    public void onFailure(Call call, IOException e) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(getApplicationContext(), "Socket response error", Toast.LENGTH_LONG).show();
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onResponse(Call call, okhttp3.Response response) throws IOException {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                // Handle the response from the Raspberry Pi
-                                try {
-                                    String responseText = response.body().string();
-                                    // Assuming that responseText is the UID you want to associate with the user
-                                    if (!responseText.isEmpty()) {
-                                        // Push the UID into the user's data in the Firebase Realtime Database
-                                        DatabaseReference userReference = reference.child(name); // Assuming 'name' is the user's name
-                                        userReference.child("uid").setValue(responseText);
-                                        Toast.makeText(getApplicationContext(), "Raspberry Pi Response: " + responseText, Toast.LENGTH_LONG).show();
-                                    }
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        });
-                    }
-                });
             }
         });
 
         regPass.addTextChangedListener(this);
     }
+
+    private void showLockSystemIdDialog(String lockSystemId) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Lock System ID");
+        builder.setMessage("Your Lock System ID is: " + lockSystemId);
+        builder.setPositiveButton("Copy to Clipboard", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                // Copy the lock system ID to the clipboard
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText("Lock System ID", lockSystemId);
+                clipboard.setPrimaryClip(clip);
+                Toast.makeText(regActivity.this, "Lock System ID copied to clipboard", Toast.LENGTH_SHORT).show();
+            }
+        });
+        builder.setNegativeButton("OK", null);
+        builder.show();
+    }
+
 
     private SecretKey generateAESKey() throws Exception {
         KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
@@ -178,6 +148,12 @@ public class regActivity extends AppCompatActivity implements TextWatcher {
             return Base64.getEncoder().encodeToString(keyBytes);
         }
         return null;
+    }
+
+    private String generateLockSystemId(String userName) {
+        // Generate a lock system ID based on the user's name and a random number
+        int randomNumber = new Random().nextInt(100000); // Adjust the range as needed
+        return userName + "_" + randomNumber;
     }
 
     @Override

@@ -126,7 +126,7 @@ public class reset extends AppCompatActivity {
                                     .build();
 
                             Request request3 = new Request.Builder()
-                                    .url("https://raspi-nfcapi23.socketxp.com/reset")
+                                    .url("https://full-honeybee-joint.ngrok-free.app/reset")
                                     .post(formbody3)
                                     .build();
 

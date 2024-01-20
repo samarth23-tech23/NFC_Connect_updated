@@ -24,11 +24,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 public class loginActivity extends AppCompatActivity {
-    EditText mUsername, mPassword;
+    EditText mUsername, mPassword, mSystemId;
     Button mLoginBtn;
     FirebaseDatabase rootNode;
     DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
-    String getPassword, pass, uName;
+    String getPassword, pass, uName, systemId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,12 +43,13 @@ public class loginActivity extends AppCompatActivity {
             Intent intent = new Intent(this, Homepage.class);
             intent.putExtra("username", username);
             startActivity(intent);
-            finish(); // Finish loginActivity to prevent going back
+            finish(); // Finish LoginActivity to prevent going back
         }
 
         setContentView(R.layout.activity_login);
         mUsername = findViewById(R.id.l_uName);
         mPassword = findViewById(R.id.l_password);
+        mSystemId = findViewById(R.id.systemId);  // Added field for system ID
         mLoginBtn = findViewById(R.id.loginBtn);
 
         mLoginBtn.setOnClickListener(new View.OnClickListener() {
@@ -56,24 +57,23 @@ public class loginActivity extends AppCompatActivity {
             public void onClick(View view) {
                 String l_password = mPassword.getText().toString();
                 uName = mUsername.getText().toString();
+                systemId = mSystemId.getText().toString();  // Get the system ID from the input field
 
-                if (uName.isEmpty() || l_password.isEmpty()) {
-                    Toast.makeText(loginActivity.this, "Please enter both username and password!", Toast.LENGTH_SHORT).show();
+                if (uName.isEmpty() || l_password.isEmpty() || systemId.isEmpty()) {
+                    Toast.makeText(loginActivity.this, "Please enter both username, password, and system ID!", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                reference.child("app").addListenerForSingleValueEvent(new ValueEventListener() {
+                reference.child("lockSystems").child(systemId).child("users").addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         if (snapshot.hasChild(uName)) {
                             getPassword = snapshot.child(uName).child("encPassword").getValue(String.class);
                             String getKey = snapshot.child(uName).child("aesKey").getValue(String.class);
-                            Toast.makeText(loginActivity.this, getKey, Toast.LENGTH_SHORT).show();
 
                             try {
                                 // Decode the AES key from Base64
-                                byte[] decodedKey;
-                                decodedKey = Base64.getDecoder().decode(getKey);
+                                byte[] decodedKey = Base64.getDecoder().decode(getKey);
                                 SecretKey secretKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
 
                                 // Decrypt the stored password using AES
@@ -102,7 +102,7 @@ public class loginActivity extends AppCompatActivity {
                                 Toast.makeText(loginActivity.this, "Decryption error", Toast.LENGTH_SHORT).show();
                             }
                         } else {
-                            Toast.makeText(loginActivity.this, "User not found!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(loginActivity.this, "User not found in the specified lock system!", Toast.LENGTH_SHORT).show();
                         }
                     }
 
