@@ -4,8 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
@@ -34,12 +33,13 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class reset extends AppCompatActivity {
-    String name, oldP, newP, getPassword, txtResponse2, username, encNFCpass, combinedUP,pass;
+    String name, oldP, newP, getPassword, txtResponse2, username, encNFCpass, combinedUP, pass, systemId;
     TextView oldpass, newpass, uname;
     Button chkBtn, resetBtn;
 
     FirebaseDatabase rootNode;
     DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+    SharedPreferences sharedPreferences;
     OkHttpClient okHttpClient = new OkHttpClient();
 
     @Override
@@ -56,6 +56,10 @@ public class reset extends AppCompatActivity {
 
         newpass.setVisibility(View.INVISIBLE);
 
+        // Retrieve systemId from SharedPreferences
+        sharedPreferences = getSharedPreferences("session", MODE_PRIVATE);
+        systemId = sharedPreferences.getString("systemId", "");
+
         chkBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -63,7 +67,7 @@ public class reset extends AppCompatActivity {
                 oldP = oldpass.getText().toString();
 
                 // Database fetching
-                reference.child("app").addListenerForSingleValueEvent(new ValueEventListener() {
+                reference.child("lockSystems").child(systemId).child("users").addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         if (snapshot.hasChild(username)) {
@@ -104,7 +108,7 @@ public class reset extends AppCompatActivity {
                 final String[] encryptedPass = {null}; // Store encryptedPass in a final array
 
                 // Database fetching
-                reference.child("app").addListenerForSingleValueEvent(new ValueEventListener() {
+                reference.child("lockSystems").child(systemId).child("users").addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         if (snapshot.hasChild(username)) {
@@ -120,45 +124,46 @@ public class reset extends AppCompatActivity {
                             combinedUP = username + ":" + encryptedPass[0];
 
                             // For resetting, send combinedUP to the server (e.g., via HTTP request)
+                            // Note: The server URL should be updated based on your requirements
                             RequestBody formbody3 = new FormBody.Builder()
                                     .add("password", combinedUP)
                                     .add("activity", "reset")
                                     .build();
 
                             Request request3 = new Request.Builder()
-                                    .url("https://full-honeybee-joint.ngrok-free.app/reset")
+                                    .url("https://full-honeybee-joint.ngrok-free.app/reset")  // Update with your server URL
                                     .post(formbody3)
                                     .build();
 
-                            Toast.makeText(reset.this, "Sending to Raspberry PI", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(reset.this, "Sending request for Reset..", Toast.LENGTH_SHORT).show();
 
                             okHttpClient.newCall(request3).enqueue(new Callback() {
                                 @Override
-                                public void onFailure(Call call, IOException e) {
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            Toast.makeText(getApplicationContext(), "Socket response error", Toast.LENGTH_LONG).show();
-                                        }
-                                    });
-                                }
-
-                                @Override
-                                public void onResponse(Call call, Response response) throws IOException {
+                                public void onResponse(@NonNull okhttp3.Call call, @NonNull Response response) throws IOException {
                                     runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
                                             try {
                                                 txtResponse2 = response.body().string();
+                                                Toast.makeText(reset.this, "Waiting for response ..", Toast.LENGTH_SHORT).show();
                                                 Toast.makeText(reset.this, txtResponse2, Toast.LENGTH_LONG).show();
-
                                                 // Update the Firebase database with the new NFC password
-                                                reference.child("app").child(username).child("encNFCpass").setValue(encryptedPass[0]);
+                                                reference.child("lockSystems").child(systemId).child("users").child(username).child("encNFCpass").setValue(encryptedPass[0]);
 
-                                                Toast.makeText(reset.this, "Firebase updated successfully", Toast.LENGTH_SHORT).show();
+                                                Toast.makeText(reset.this, "Password updated successfully", Toast.LENGTH_SHORT).show();
                                             } catch (IOException e) {
                                                 e.printStackTrace();
                                             }
+                                        }
+                                    });
+                                }
+
+                                @Override
+                                public void onFailure(@NonNull okhttp3.Call call, @NonNull IOException e) {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Toast.makeText(getApplicationContext(), "Socket response error", Toast.LENGTH_LONG).show();
                                         }
                                     });
                                 }

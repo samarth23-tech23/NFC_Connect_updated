@@ -85,6 +85,7 @@ public class loginActivity extends AppCompatActivity {
                                     SharedPreferences sharedPreferences = getSharedPreferences("session", MODE_PRIVATE);
                                     SharedPreferences.Editor editor = sharedPreferences.edit();
                                     editor.putString("st", uName);
+                                    editor.putString("systemId", systemId); // Store the systemId in shared preferences
                                     editor.apply();
 
                                     Toast.makeText(loginActivity.this, "Successfully logged in!", Toast.LENGTH_SHORT).show();
