@@ -4,119 +4,106 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/login_bg"
     tools:context=".reset">
 
     <TextView
         android:id="@+id/tv1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="386dp"
+        android:layout_height="65dp"
+        android:fontFamily="@font/yeseva_one"
         android:text="Reset User Password"
         android:textAlignment="center"
-        android:textSize="20sp"
+        android:textColor="@color/white"
+        android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintHorizontal_bias="0.64"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.159" />
+        app:layout_constraintVertical_bias="0.129" />
 
     <Button
         android:id="@+id/resetBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Reset Password"
+        android:fontFamily="@font/yeseva_one"
+        android:textSize="20sp"
+        android:backgroundTint="#012060"
+        android:textColor="@color/white"
+        android:textColorHint="#FA000000"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.572" />
+        app:layout_constraintVertical_bias="0.765" />
 
     <Button
         android:id="@+id/chkBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Check"
+        android:fontFamily="@font/yeseva_one"
+        android:textSize="20sp"
+        android:textColor="@color/white"
+        android:backgroundTint="#012060"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.47"
+        app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/resetBtn"
-        app:layout_constraintVertical_bias="0.335" />
-
-    <TextView
-        android:id="@+id/textView15"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:text="Enter user name: "
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/uName2"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.277" />
+        app:layout_constraintVertical_bias="0.375" />
 
     <EditText
         android:id="@+id/uName2"
-        android:layout_width="210dp"
+        android:layout_width="239dp"
         android:layout_height="41dp"
-        android:layout_marginEnd="32dp"
+        android:background="@drawable/edit_bg"
+        android:drawableLeft="@drawable/user"
         android:ems="10"
+        android:fontFamily="@font/belleza"
+        android:hint="Username"
         android:inputType="textPersonName"
+        android:textColorHint="#FA000000"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.269" />
-
-    <TextView
-        android:id="@+id/textView17"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:text="Enter old password"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/oldPass"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.339" />
+        app:layout_constraintVertical_bias="0.4" />
 
     <EditText
         android:id="@+id/oldPass"
-        android:layout_width="209dp"
-        android:layout_height="47dp"
-        android:layout_marginEnd="32dp"
+        android:layout_width="239dp"
+        android:layout_height="41dp"
+        android:background="@drawable/edit_bg"
+        android:drawableLeft="@drawable/lock"
         android:ems="10"
+        android:fontFamily="@font/belleza"
+        android:hint="Old Password"
+        android:textColorHint="#FA000000"
         android:inputType="textPersonName"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.34" />
-
-    <TextView
-        android:id="@+id/textView18"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:text="Enter new password"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/newPass"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.403" />
+        app:layout_constraintVertical_bias="0.521" />
 
     <EditText
         android:id="@+id/newPass"
-        android:layout_width="205dp"
-        android:layout_height="38dp"
-        android:layout_marginEnd="36dp"
+        android:layout_width="239dp"
+        android:layout_height="41dp"
+        android:background="@drawable/edit_bg"
+        android:drawableLeft="@drawable/lock"
         android:ems="10"
+        android:fontFamily="@font/belleza"
+        android:hint="New Password"
         android:inputType="textPersonName"
+        android:textColorHint="#131313"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.411" />
+        app:layout_constraintVertical_bias="0.631" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -69,6 +69,11 @@ public class Homepage extends AppCompatActivity {
         startActivity(intent);
     }
 
+    public void checkUsers(View v) {
+        Intent intent = new Intent(Homepage.this, users.class);
+        startActivity(intent);
+    }
+
     public void log(View r) {
         Intent intent = new Intent(getApplicationContext(), LogActivity.class);
         intent.putExtra("username", tname.getText().toString().replace("Welcome back, ", ""));

@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.ClipData;
 import android.os.Build;
 import android.os.Bundle;
-import android.telecom.Call;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
@@ -55,7 +54,7 @@ public class regActivity extends AppCompatActivity implements TextWatcher {
 
         reguName = findViewById(R.id.uName);
         regemail = findViewById(R.id.eId);
-        rButton = findViewById(R.id.regbtn2);
+        rButton = findViewById(R.id.addbtn2);
         regPass = findViewById(R.id.pId);
         regnPass = findViewById(R.id.npId);
 
