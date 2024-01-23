@@ -12,8 +12,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.NFCConnect">
         <activity
+            android:name=".users"
+            android:exported="false" />
+        <activity
+            android:name=".add_newuser"
+            android:exported="false" />
+        <activity
             android:name=".SplashActivity"
-            android:exported="true" >
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -47,9 +53,11 @@
             android:parentActivityName=".MainActivity" />
         <activity
             android:name=".MainActivity"
-            android:exported="false">
+            android:exported="false" />
 
-        </activity>
+        <meta-data
+            android:name="preloaded_fonts"
+            android:resource="@array/preloaded_fonts" />
     </application>
 
 </manifest>
