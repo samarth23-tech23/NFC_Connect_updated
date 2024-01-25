@@ -2,8 +2,10 @@
 
 package com.example.nfcconnect;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -63,6 +65,12 @@ public class users extends AppCompatActivity {
                 // Handle errors if needed
             }
         });
+    }
+
+    public void viewUsers(View v) {
+        Intent intent = new Intent(users.this, add_newuser.class);
+        startActivity(intent);
+
     }
 
     // Add any other methods or functionality as needed
