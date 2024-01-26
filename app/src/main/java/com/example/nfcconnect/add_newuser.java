@@ -14,6 +14,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -96,7 +97,7 @@ public class add_newuser extends AppCompatActivity {
         cipher.init(Cipher.ENCRYPT_MODE, secretKey);
         byte[] encryptedBytes = cipher.doFinal(plainText.getBytes());
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            return android.util.Base64.encodeToString(encryptedBytes, android.util.Base64.DEFAULT); // Convert the bytes to a Base64-encoded string
+            return Base64.getEncoder().encodeToString(encryptedBytes); // Convert the bytes to a Base64-encoded string
         }
         return null;
     }
@@ -105,7 +106,7 @@ public class add_newuser extends AppCompatActivity {
         // Convert the SecretKey to a Base64-encoded string
         byte[] keyBytes = secretKey.getEncoded();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            return android.util.Base64.encodeToString(keyBytes, android.util.Base64.DEFAULT);
+            return Base64.getEncoder().encodeToString(keyBytes);
         }
         return null;
     }

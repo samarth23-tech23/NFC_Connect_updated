@@ -140,12 +140,12 @@ public class regActivity extends AppCompatActivity implements TextWatcher {
                                         try {
                                             String responseText = response.body().string();
                                             // Assuming that responseText is the UID you want to associate with the user
-                                            if (!responseText.isEmpty()) {
-                                                // Push the UID into the user's data in the Firebase Realtime Database
-                                                DatabaseReference userReference = reference.child(name); // Assuming 'name' is the user's name
-                                                userReference.child("uid").setValue(responseText);
-                                                Toast.makeText(getApplicationContext(), " Recived: " + responseText, Toast.LENGTH_LONG).show();
-                                            }
+//                                            if (!responseText.isEmpty()) {
+//                                                // Push the UID into the user's data in the Firebase Realtime Database
+//                                                DatabaseReference userReference = reference.child(name); // Assuming 'name' is the user's name
+//                                                userReference.child("uid").setValue(responseText);
+//                                                Toast.makeText(getApplicationContext(), " Recived: " + responseText, Toast.LENGTH_LONG).show();
+//                                            }
                                         } catch (IOException e) {
                                             e.printStackTrace();
                                         }

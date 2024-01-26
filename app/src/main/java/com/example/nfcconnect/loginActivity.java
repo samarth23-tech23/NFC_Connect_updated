@@ -67,42 +67,51 @@ public class loginActivity extends AppCompatActivity {
                 reference.child("lockSystems").child(systemId).child("users").addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        if (snapshot.hasChild(uName)) {
-                            getPassword = snapshot.child(uName).child("encPassword").getValue(String.class);
-                            String getKey = snapshot.child(uName).child("aesKey").getValue(String.class);
+                        boolean userFound = false;
 
-                            try {
-                                // Decode the AES key from Base64
-                                byte[] decodedKey = Base64.getDecoder().decode(getKey);
-                                SecretKey secretKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
+                        for (DataSnapshot userSnapshot : snapshot.getChildren()) {
+                            String currentUsername = userSnapshot.getKey();
+                            if (currentUsername != null && currentUsername.equals(uName)) {
+                                userFound = true;
+                                getPassword = userSnapshot.child("encPassword").getValue(String.class);
+                                String getKey = userSnapshot.child("aesKey").getValue(String.class);
 
-                                // Decrypt the stored password using AES
-                                pass = decryptAES(getPassword, secretKey);
+                                try {
+                                    // Decode the AES key from Base64
+                                    byte[] decodedKey = Base64.getDecoder().decode(getKey);
+                                    SecretKey secretKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES");
 
-                                if (l_password.equals(pass)) {
-                                    // Passwords match, user is logged in successfully
-                                    // Save the session in shared preferences
-                                    SharedPreferences sharedPreferences = getSharedPreferences("session", MODE_PRIVATE);
-                                    SharedPreferences.Editor editor = sharedPreferences.edit();
-                                    editor.putString("st", uName);
-                                    editor.putString("systemId", systemId); // Store the systemId in shared preferences
-                                    editor.apply();
+                                    // Decrypt the stored password using AES
+                                    pass = decryptAES(getPassword, secretKey);
 
-                                    Toast.makeText(loginActivity.this, "Successfully logged in!", Toast.LENGTH_SHORT).show();
+                                    if (l_password.equals(pass)) {
+                                        // Passwords match, user is logged in successfully
+                                        // Save the session in shared preferences
+                                        SharedPreferences sharedPreferences = getSharedPreferences("session", MODE_PRIVATE);
+                                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                                        editor.putString("st", uName);
+                                        editor.putString("systemId", systemId); // Store the systemId in shared preferences
+                                        editor.apply();
 
-                                    // Opening new Activity
-                                    Intent intent = new Intent(loginActivity.this, Homepage.class);
-                                    intent.putExtra("username", uName);
-                                    startActivity(intent);
-                                    finish();
-                                } else {
-                                    Toast.makeText(loginActivity.this, "Wrong Password!", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(loginActivity.this, "Successfully logged in!", Toast.LENGTH_SHORT).show();
+
+                                        // Opening new Activity
+                                        Intent intent = new Intent(loginActivity.this, Homepage.class);
+                                        intent.putExtra("username", uName);
+                                        startActivity(intent);
+                                        finish();
+                                    } else {
+                                        Toast.makeText(loginActivity.this, "Wrong Password!", Toast.LENGTH_SHORT).show();
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                    Toast.makeText(loginActivity.this, "Decryption error", Toast.LENGTH_SHORT).show();
                                 }
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                                Toast.makeText(loginActivity.this, "Decryption error", Toast.LENGTH_SHORT).show();
+                                break; // No need to continue iterating once the user is found
                             }
-                        } else {
+                        }
+
+                        if (!userFound) {
                             Toast.makeText(loginActivity.this, "User not found in the specified lock system!", Toast.LENGTH_SHORT).show();
                         }
                     }
@@ -115,11 +124,23 @@ public class loginActivity extends AppCompatActivity {
         });
     }
 
-    private String decryptAES(String encryptedText, SecretKey secretKey) throws Exception {
-        Cipher cipher = Cipher.getInstance("AES");
-        cipher.init(Cipher.DECRYPT_MODE, secretKey);
-        byte[] encryptedBytes = Base64.getDecoder().decode(encryptedText);
-        byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
-        return new String(decryptedBytes, StandardCharsets.UTF_8);
+    private String decryptAES(String encryptedText, SecretKey secretKey) {
+        try {
+            Cipher cipher = Cipher.getInstance("AES");
+            cipher.init(Cipher.DECRYPT_MODE, secretKey);
+
+            // Decode the Base64-encoded encrypted text
+            byte[] encryptedBytes = Base64.getDecoder().decode(encryptedText);
+
+            // Decrypt the password
+            byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
+
+            // Convert decrypted bytes to String
+            return new String(decryptedBytes, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Decryption Error";
+        }
     }
+
 }
