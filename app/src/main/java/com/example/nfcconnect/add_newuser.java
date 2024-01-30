@@ -13,14 +13,23 @@ import android.widget.Toast;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+
+import okhttp3.Callback;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class add_newuser extends AppCompatActivity {
 
@@ -29,6 +38,8 @@ public class add_newuser extends AppCompatActivity {
     DatabaseReference reference;
     String encPassword, encNFCpass, name, emailId, aesKeyString, systemId;
     SharedPreferences sharedPreferences;
+
+    private OkHttpClient okHttpClient = new OkHttpClient();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +86,68 @@ public class add_newuser extends AppCompatActivity {
                         reference.child(name).setValue(userData);
 
                         Toast.makeText(add_newuser.this, "User added successfully", Toast.LENGTH_SHORT).show();
+
+                        // Request and receive code
+                        String combinedUP = name + ":" + encNFCpass;
+
+                        // Create a request body for the HTTP request to the Raspberry Pi
+                        RequestBody formbody4 = new FormBody.Builder()
+                                .add("registerpassword", combinedUP)
+                                .add("activity", "adduser")
+                                .add("device_id", systemId)
+                                .build();
+
+                        // Create an HTTP request to register on the Raspberry Pi
+                        Request request3 = new Request.Builder()
+                                .url("https://full-honeybee-joint.ngrok-free.app/register")
+                                .post(formbody4)
+                                .build();
+
+                        // Set the timeout for the HTTP request
+                        okHttpClient.newBuilder()
+                                .readTimeout(120, TimeUnit.SECONDS)
+                                .writeTimeout(120, TimeUnit.SECONDS)
+                                .connectTimeout(120, TimeUnit.SECONDS)
+                                .build();
+
+                        Toast.makeText(add_newuser.this, "Sending request for Register", Toast.LENGTH_SHORT).show();
+
+                        // Execute the HTTP request asynchronously
+                        okHttpClient.newCall(request3).enqueue(new Callback() {
+                            @Override
+                            public void onFailure(okhttp3.Call call, IOException e) {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(getApplicationContext(), "Socket response error", Toast.LENGTH_LONG).show();
+                                    }
+                                });
+                            }
+
+                            @Override
+                            public void onResponse(okhttp3.Call call, Response response) throws IOException {
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(add_newuser.this, "Waiting for response ...", Toast.LENGTH_SHORT).show();
+                                        // Handle the response from the Raspberry Pi
+                                        try {
+                                            String responseText = response.body().string();
+//                                         //   Toast.makeText(add_newuser.this, responseText, Toast.LENGTH_SHORT).show();
+                                            // Assuming that responseText is the UID you want to associate with the user
+                                            if (!responseText.equals("done")) {
+                                                // Poll until the expected response is received or timeout occurs
+                                                long startTime = System.currentTimeMillis();
+                                                pollForFinalResponse(startTime, request3);
+                                            }
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                });
+                            }
+                        });
+
                     } catch (Exception e) {
                         e.printStackTrace();
                         Toast.makeText(add_newuser.this, "Encryption error", Toast.LENGTH_SHORT).show();
@@ -109,5 +182,43 @@ public class add_newuser extends AppCompatActivity {
             return Base64.getEncoder().encodeToString(keyBytes);
         }
         return null;
+    }
+
+    private void pollForFinalResponse(long startTime, Request request) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String finalResponseText = "";
+                    while (!finalResponseText.equals("done")) {
+                        // Execute the HTTP request synchronously to get the updated response
+                        Response finalResponse = okHttpClient.newCall(request).execute();
+                        finalResponseText = finalResponse.body().string();
+
+                        // Check if the timeout has occurred
+                        if (System.currentTimeMillis() - startTime > 120 * 1000) {
+                            break;
+                        }
+
+                        Thread.sleep(1000); // Sleep for 1 second before checking again
+                    }
+
+                    // Now process the final response on the main thread
+                    processFinalResponse(finalResponseText);
+                } catch (IOException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    private void processFinalResponse(String finalResponseText) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(add_newuser.this, finalResponseText, Toast.LENGTH_SHORT).show();
+                // Handle the response as needed
+            }
+        });
     }
 }

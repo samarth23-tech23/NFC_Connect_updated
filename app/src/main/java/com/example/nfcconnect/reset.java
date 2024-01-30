@@ -122,11 +122,12 @@ public class reset extends AppCompatActivity {
                             }
 
                             combinedUP = username + ":" + encryptedPass[0];
+                            Toast.makeText(reset.this, combinedUP, Toast.LENGTH_LONG).show();
 
                             // For resetting, send combinedUP to the server (e.g., via HTTP request)
                             // Note: The server URL should be updated based on your requirements
                             RequestBody formbody3 = new FormBody.Builder()
-                                    .add("password", combinedUP)
+                                    .add("resetpassword", combinedUP)
                                     .add("activity", "reset")
                                     .build();
 

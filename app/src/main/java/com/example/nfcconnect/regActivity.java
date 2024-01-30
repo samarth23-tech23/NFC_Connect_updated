@@ -28,6 +28,7 @@ import java.util.Base64; // Import Base64
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Callback;
 import okhttp3.FormBody;
@@ -38,14 +39,16 @@ import okhttp3.Response;
 
 public class regActivity extends AppCompatActivity implements TextWatcher {
 
-    EditText reguName, regemail, regPass, regnPass;
-    Button rButton;
-    FirebaseDatabase rootNode;
-    DatabaseReference reference;
-    String encPassword, encNFCpass, name, emailId, aesKeyString; // Store the AES key as a string
-    SecretKey aesKey;
+    private static final int TIMEOUT_SECONDS = 120; // Set your desired timeout duration
+    private EditText reguName, regemail, regPass, regnPass;
+    private Button rButton;
+    private FirebaseDatabase rootNode;
+    private DatabaseReference reference;
+    private String encPassword, encNFCpass, name, emailId, aesKeyString; // Store the AES key as a string
+    private SecretKey aesKey;
+    private String combinedUP;
 
-    OkHttpClient okHttpClient = new OkHttpClient();
+    private OkHttpClient okHttpClient = new OkHttpClient();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,22 +101,27 @@ public class regActivity extends AppCompatActivity implements TextWatcher {
                         reference.child(lockSystemId).child("users").child(name).setValue(userData);
 
                         showLockSystemIdDialog(lockSystemId);
-
-                        Toast.makeText(regActivity.this, "Successfully Registered with Name " + name, Toast.LENGTH_SHORT).show();
+                        combinedUP = name + ":" + encNFCpass;
+                        Toast.makeText(regActivity.this, combinedUP + ":" + lockSystemId, Toast.LENGTH_LONG).show();
 
                         // Create a request body for the HTTP request to the Raspberry Pi
                         RequestBody formbody4 = new FormBody.Builder()
-                                .add("name", name)
-                                .add("email", emailId)
-                                .add("password", password)
-                                .add("nfc_password", NFC_Password)
-                                .add("aes_key", encodeAESKeyToString(aesKey))
+                                .add("registerpassword", combinedUP)
+                                .add("activity", "register")
+                                .add("device_id", lockSystemId)
                                 .build();
 
                         // Create an HTTP request to register on the Raspberry Pi
                         Request request3 = new Request.Builder()
                                 .url("https://full-honeybee-joint.ngrok-free.app/register")
                                 .post(formbody4)
+                                .build();
+
+                        // Set the timeout for the HTTP request
+                        okHttpClient.newBuilder()
+                                .readTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                                .writeTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                                .connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
                                 .build();
 
                         Toast.makeText(regActivity.this, "Sending request for Register", Toast.LENGTH_SHORT).show();
@@ -139,13 +147,13 @@ public class regActivity extends AppCompatActivity implements TextWatcher {
                                         // Handle the response from the Raspberry Pi
                                         try {
                                             String responseText = response.body().string();
+                                            Toast.makeText(regActivity.this, responseText, Toast.LENGTH_SHORT).show();
                                             // Assuming that responseText is the UID you want to associate with the user
-//                                            if (!responseText.isEmpty()) {
-//                                                // Push the UID into the user's data in the Firebase Realtime Database
-//                                                DatabaseReference userReference = reference.child(name); // Assuming 'name' is the user's name
-//                                                userReference.child("uid").setValue(responseText);
-//                                                Toast.makeText(getApplicationContext(), " Recived: " + responseText, Toast.LENGTH_LONG).show();
-//                                            }
+                                            if (!responseText.equals("done")) {
+                                                // Poll until the expected response is received or timeout occurs
+                                                long startTime = System.currentTimeMillis();
+                                                pollForFinalResponse(startTime, request3);
+                                            }
                                         } catch (IOException e) {
                                             e.printStackTrace();
                                         }
@@ -213,6 +221,44 @@ public class regActivity extends AppCompatActivity implements TextWatcher {
         // Generate a lock system ID based on the user's name and a random number
         int randomNumber = new Random().nextInt(100000); // Adjust the range as needed
         return userName + "_" + randomNumber;
+    }
+
+    private void pollForFinalResponse(long startTime, Request request) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String finalResponseText = "";
+                    while (!finalResponseText.equals("done")) {
+                        // Execute the HTTP request synchronously to get the updated response
+                        Response finalResponse = okHttpClient.newCall(request).execute();
+                        finalResponseText = finalResponse.body().string();
+
+                        // Check if the timeout has occurred
+                        if (System.currentTimeMillis() - startTime > TIMEOUT_SECONDS * 1000) {
+                            break;
+                        }
+
+                        Thread.sleep(1000); // Sleep for 1 second before checking again
+                    }
+
+                    // Now process the final response on the main thread
+                    processFinalResponse(finalResponseText);
+                } catch (IOException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    private void processFinalResponse(String finalResponseText) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(regActivity.this, finalResponseText, Toast.LENGTH_SHORT).show();
+                // Handle the response as needed
+            }
+        });
     }
 
     @Override

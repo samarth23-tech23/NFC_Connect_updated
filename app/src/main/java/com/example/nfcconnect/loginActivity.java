@@ -1,11 +1,14 @@
 package com.example.nfcconnect;
 
+import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -16,6 +19,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -86,12 +90,8 @@ public class loginActivity extends AppCompatActivity {
 
                                     if (l_password.equals(pass)) {
                                         // Passwords match, user is logged in successfully
-                                        // Save the session in shared preferences
-                                        SharedPreferences sharedPreferences = getSharedPreferences("session", MODE_PRIVATE);
-                                        SharedPreferences.Editor editor = sharedPreferences.edit();
-                                        editor.putString("st", uName);
-                                        editor.putString("systemId", systemId); // Store the systemId in shared preferences
-                                        editor.apply();
+                                        // Save the session and FCM token in shared preferences
+                                        saveSessionAndToken(uName, systemId);
 
                                         Toast.makeText(loginActivity.this, "Successfully logged in!", Toast.LENGTH_SHORT).show();
 
@@ -141,6 +141,35 @@ public class loginActivity extends AppCompatActivity {
             e.printStackTrace();
             return "Decryption Error";
         }
+    }
+
+    private void saveSessionAndToken(String username, String systemId) {
+        // Save the session in shared preferences
+        SharedPreferences sharedPreferences = getSharedPreferences("session", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("st", username);
+        editor.putString("systemId", systemId); // Store the systemId in shared preferences
+        editor.apply();
+
+        // Obtain the FCM token and log it
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        String fcmToken = task.getResult();
+
+                        // Log the FCM token
+                        Log.d(TAG, "FCM Token: " + fcmToken);
+
+                        // Save the FCM token in shared preferences
+                        SharedPreferences fcmPreferences = getSharedPreferences("fcm", MODE_PRIVATE);
+                        SharedPreferences.Editor fcmEditor = fcmPreferences.edit();
+                        fcmEditor.putString("fcmToken", fcmToken);
+                        fcmEditor.apply();
+                    } else {
+                        Log.e(TAG, "Error getting FCM token: " + task.getException());
+                        // Handle the error if needed
+                    }
+                });
     }
 
 }
